@@ -1,0 +1,306 @@
+h3 {
+  margin-bottom: 10px;
+}
+
+input, td, th {
+  width: auto;
+}
+
+.edit_data input[type=text] {
+  width: 80px;
+}
+
+.lazy_pane .unlazy_pane_link {
+  display: block;
+  font-size: 1.5em;
+  padding: 5px 15px;
+}
+
+.row {
+  margin-bottom: 20px;
+}
+
+#mass-gift-grid {
+  width: 900px;
+  margin-bottom: 10px;
+}
+
+select {
+  width: auto;
+}
+
+.btn-muzzle {
+  width: 80px;
+}
+
+body .pagination ul > li > a, body .pagination ul > li > span{
+  line-height: 24px;
+}
+
+.pagination ul > li > span input{
+  width: 40px;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+#chat-logs-table{
+  margin-bottom: 0;
+}
+
+.admin_battle_simulator #admin label {
+  display: inline-block;
+}
+
+.admin_battle_simulator #admin label input[type=radio] {
+  margin-bottom: 4px;
+}
+
+.admin_battle_simulator #admin input[type="text"] {
+  width: 100px;
+  margin-bottom: 0;
+}
+
+.admin_battle_simulator #admin select {
+  width: 114px;
+  margin-bottom: 0;
+}
+
+.admin_battle_simulator #admin .content {
+  margin-left: 250px;
+}
+
+.admin_battle_simulator #admin .span6 {
+  margin-bottom: 10px;
+  width: 320px;
+}
+
+.admin_battle_simulator #admin .span9 {
+  margin-bottom: 10px;
+  width: 480px;
+}
+
+.admin_battle_simulator #admin .span12 {
+  width: 640px;
+}
+
+.admin_battle_simulator #admin .nav-list .icon-chevron-right {
+  float: right;
+  margin-right: -6px;
+  margin-top: 2px;
+  opacity: 0.25;
+}
+
+.admin_battle_simulator #admin .nav-list a {
+  width: 190px;
+}
+
+.admin_battle_simulator #admin .title {
+  text-align: center;
+  border-bottom: 2px solid #999;
+  margin: 20px 0 30px;
+  padding-bottom: 9px;
+}
+
+.admin_battle_simulator #admin .attacker{
+  text-align: right;
+}
+
+.admin_battle_simulator #admin .attacker .shift_left{
+  margin-left: -150px;
+}
+
+.admin_battle_simulator #admin .attacker label.seprate {
+  padding-top: 5px;
+}
+
+.admin_battle_simulator #admin .active > a {
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.1) inset, -1px 0 0 rgba(0, 0, 0, 0.1) inset;
+  padding: 9px 15px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  border-radius: 4px;
+}
+
+.admin_battle_simulator #admin .nav-list > .active > a, .nav-list > .active > a:hover {
+  background-color: #0088CC;
+  color: #FFF;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.admin_battle_simulator #admin .troops-block .row.troop{
+  margin-bottom: 0;
+}
+
+h2.badge{
+  padding: 8px 20px;
+}
+
+body{
+  position: relative;
+}
+
+#admin_leaderboards_index .form-inline .row .control-field {
+  display: inline-block;
+  margin-left: 50px;
+  margin-bottom: 20px;
+}
+
+#admin_leaderboards_index .form-inline .row .control-field.hide {
+  display: none;
+}
+
+#admin_leaderboards_index .form-inline .row .control-field.error label {
+  color: #B94A48;
+}
+
+#admin_leaderboards_index .form-inline .row .control-field.error .select2-choice.select2-default {
+  border-color: #B94A48;
+  border-width: 1px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+  color: #B94A48;
+}
+
+.form-actions form{
+  display: inline-block;
+  margin: 0
+}
+
+.debug-actions{
+  margin-bottom: 10px;
+}
+
+.list-actions {
+  padding-bottom: 10px;
+}
+
+.control-data {
+  display: inline-block;
+  padding-top: 5px;
+}
+
+th.sort {
+  cursor: pointer;
+}
+
+th.sort a {
+  color: #333;
+}
+
+.send-item-unit label,
+.send-troop-unit label {
+  width: 200px;
+  float: left;
+}
+
+.send-item-unit input,
+.send-troop-unit input {
+  width: 60px;
+  float: left;
+}
+
+#send-item-form .send-item-list .row-fluid [class*="span"],
+#send-troop-form .send-troop-list .row-fluid [class*="span"] {
+  margin-left: 0;
+}
+
+#admin {
+  padding: 10px;
+}
+
+.page-header {
+  border-color: #ccc;
+}
+
+.nav-link {
+  margin-bottom: 10px;
+}
+
+.chart {
+  padding: 10px;
+}
+
+.close.remove-item, .close.follow {
+  float: none;
+  display: inline-block;
+  height: 14px;
+}
+
+img.item-icon {
+  width: 50px;
+  height: 50px;
+}
+
+#admin .page-header h1,
+#admin .page-header h1 .label{
+  font-size: 38.5px;
+}
+
+#admin .page-header h1 .label{
+  line-height: 40px;
+  padding: 4px 8px;
+}
+
+hr {
+  border-top-color: #ccc;
+}
+
+#admin, html {
+  background-color: #fff;
+}
+
+.two-list-select select {
+  width: 250px;
+}
+
+.two-list-select select {
+  height: 150px;
+}
+
+.two-list-select button {
+  display: block;
+  width: 40px;
+  margin: 4px 0;
+}
+
+.two-list-select .up-down-actions-container,
+.two-list-select .left-right-actions-container,
+.two-list-select .right-select-container{
+  margin-left: 10px;
+}
+
+.datetimeEntry_wrap .datetimeEntry_control{
+  margin-bottom: 0;
+}
+
+div.leaderboard-time{
+  display: block;
+  margin-bottom: 5px;
+}
+
+#rubies_purchase{
+  background: #FFF;
+  border: 1px solid #333;
+  margin: 15px 0;
+}
+#rubies_purchase #rubies_purchase_pane{
+  font-size: 1.5em;
+  padding: 5px 15px;
+}
+
+#rubies_purchase #rubies_purchase_pane:hover{
+background: #E6F1F2;}
+#rubies_purchase #rubyies_form_and_list{
+  display:none;
+}
+#rubies_usage_btns{
+  margin-left: 20px;
+}
+
+#rubies_purchase #close_ruby_purchase{
+  float: right;
+  padding-right: 10px;
+}
+
+#rubies_purchase #rubyies_form_and_list{
+  clear: both;
+}

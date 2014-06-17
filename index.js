@@ -11,10 +11,12 @@ var wingsSound; // wings sound
 var dragons_list = [];
 var dragons_list_map ={}
 var currRound = 1;
-var battleNotes = "Round 1 start";
 var renderTexts = [];
 var fireball_list = [];
 var heal_list = [];
+var fire;
+
+var RenderList = {}
 
 var Config = {
 	DragonMargin: 30,
@@ -22,6 +24,195 @@ var Config = {
 	StartX:400,
 	StartY:100,
 }
+
+var $j = jQuery.noConflict();
+
+var Utils = Class.create();
+
+Utils.GUID = function()
+{
+	var G = function() {
+		return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+	}
+	var guid = (G() + G() + "-" + G() + "-" + G() + "-" + 
+G() + "-" + G() + G() + G()).toUpperCase();
+	return guid;
+}
+
+
+Utils.AddRender = function(obj)
+{
+	RenderList[obj.guid] = obj;
+}
+
+Utils.DelRender = function(obj)
+{
+	delete RenderList[obj.guid];
+}
+
+
+var GameObject = Class.create();
+GameObject.prototype = {
+	initialize:function(x,y)
+	{
+		this.x = x;
+		this.y = y
+		this.guid = Utils.GUID();
+	},
+	show:function(ctx)
+	{
+
+	}
+}
+
+var Sprite = Class.create();
+Sprite.prototype = {
+	initialize:function(w,h,x,y,image,col,frame_size,play_speed)
+	{
+		this.w = w;
+		this.h = h
+		this.image = image
+		this.col = col
+		this.frame_size = frame_size
+		this.cur_frame = 0
+		if(play_speed == undefined)
+			this.play_speed = 1
+		else
+			this.play_speed = play_speed
+		GameObject.prototype.initialize.call(this,x,y);
+	}
+	,
+	show:function(ctx)
+	{		
+		this.cur_frame ++ ;
+		var cur_frame = parseInt(this.cur_frame * this.play_speed);
+		if(cur_frame >= this.frame_size )
+		{
+			this.cur_frame  = 0;
+			cur_frame = 0;
+		}
+		ctx.drawImage(this.image, (cur_frame %this.col) *this.w, parseInt( (cur_frame /this.col)) * this.h, this.w, this.h, this.x - this.w/2, this.y - this.h/2, this.w, this.h);
+	}
+}
+
+
+var EffectObject =  Class.create(Sprite,{
+	initialize:function() //mil seconds
+	{
+		Sprite.prototype.initialize.apply(this,arguments);
+	},
+	show:function(ctx)
+	{
+		ctx.drawImage(this.image, (this.cur_frame %this.col) *this.w, parseInt( (this.cur_frame /this.col)) * this.h, this.w, this.h, this.x - this.w/2, this.y - this.h/2, this.w, this.h);
+		this.cur_frame ++ ;
+		if(this.cur_frame >= this.frame_size )
+		{
+			this.cur_frame  = 0;
+			Utils.DelRender(this);
+			if(this.callback != undefined)
+			{
+				this.callback();
+			}
+		}
+	}
+});
+
+var HealingEffect =  Class.create(EffectObject,{
+	initialize:function(x,y,callback)
+	{
+		var image = new Image();
+		image.src = "images/healeffect.png"
+		this.callback = callback;
+		EffectObject.prototype.initialize.call(this,128,128,x,y,image,5,19);
+	}
+});
+
+
+
+
+
+var AttackEffect = Class.create(GameObject,{
+	initialize:function(x,y,damage,callback)
+	{
+		this.damage = damage;
+		this.start_size = 35;
+		this.end_size = 40;
+		this.direction = 1;
+		this.cur_size = this.start_size;
+		this.callback = callback;
+		GameObject.prototype.initialize.call(this,x,y);
+	},
+	show:function()
+	{
+		ctx.font = this.cur_size + "px Arial";
+
+		if(this.damage > 0) //damage
+		{
+			ctx.fillStyle = '#FF3300'
+			ctx.fillText("-" + this.damage,this.x,this.y);
+		}
+		else {
+			ctx.fillStyle = '#66FF66';
+			ctx.fillText(-this.damage,this.x,this.y);
+		} 
+	
+
+		this.cur_size += 2* this.direction;
+		if(this.cur_size >= this.end_size)
+		{
+			this.direction = -1;
+		}
+		else if (this.cur_size <= this.start_size) {
+			Utils.DelRender(this)
+			if(this.callback != undefined)
+			{
+				this.callback();
+			}
+		}
+	}
+});
+
+var AbsorbBuffer =  Class.create(Sprite,{
+	initialize:function(x,y,play_speed,callback)
+	{
+		var image = new Image();
+		image.src = "images/absorbbuff.png"
+		Sprite.prototype.initialize.call(this,128,126,x,y,image,4,9,play_speed);
+	}
+});
+
+var ReboundBuffer =  Class.create(Sprite,{
+	initialize:function(x,y,callback)
+	{
+		var play_speed = 1;
+		var image = new Image();
+		image.src = "images/reboundbuff.png"
+		Sprite.prototype.initialize.call(this,128,126,x,y,image,1,1,play_speed);
+	}
+});
+
+
+
+function Fire()
+{
+	this.w = 128
+	this.h = 128
+	this.x = 300
+	this.y = 300
+
+	this.anim_index = 0
+
+}
+
+
+Fire.prototype = {
+	show : function(ctx){
+	}
+}
+
+
+
+
 
 
 var TO_RADIANS = Math.PI/180; 
@@ -41,6 +232,11 @@ function drawRotatedImage(image, x, y, angle) {
 	ctx.restore(); 
 }
 // -------------------------------------------------------------
+
+
+
+
+
 function Heal(x,y,healing)
 {
 	this.x = x
@@ -62,9 +258,6 @@ function Dragon( slot, type, life, max_life, level)
 	this.x =  xy.x
 	this.y =  xy.y 
 	
-	if(slot >5)
-		this.y += Config.TeamMargin
-
 	this.origin_x = this.x;
 	this.origin_y = this.y;
 
@@ -84,14 +277,21 @@ function Dragon( slot, type, life, max_life, level)
 
 Dragon.find_pos_by_slot = function(slot)
 {
+	var dest_x =  Config.StartX + parseInt(slot % 3 ) * (dragonW  + Config.DragonMargin)  
+	var dest_y =  Config.StartY + parseInt(slot / 3) * (dragonH  + Config.DragonMargin)  
+	if(slot >5)
+	{
+		dest_y += Config.TeamMargin
+		dest_y -= dragonH/2
+	}
+	else{
 
-		var dest_x =  Config.StartX + parseInt(slot % 3 ) * (dragonW  + Config.DragonMargin)  
-		var dest_y =  Config.StartY + parseInt(slot / 3) * (dragonH  + Config.DragonMargin)  
-		return {x:dest_x,y:dest_y};
+		dest_y += dragonH/2
+	}
+	return {x:dest_x,y:dest_y};
 }
 
-Dragon.types_string = ["Greate","Fire","Earth","Water","Night"]
-
+Dragon.types_string = ["Greate","Water","Night","Earth","Fire"]
 
 Dragon.prototype = {
 	show:function(ctx,iSprPos)
@@ -105,8 +305,8 @@ Dragon.prototype = {
 		}
 
 		//render name
-		ctx.font = "12px Arial";
-		ctx.fillStyle = 'white';
+		ctx.font = "14px Arial";
+		ctx.fillStyle = 'green';
 
 		ctx.fillText(Dragon.types_string[dragon.type],dragon.x + 10 ,dragon.y - 23);
 	
@@ -134,19 +334,12 @@ Dragon.prototype = {
 
 
 		//render buffer
+		$j.each(dragon.buffs,function(key,value){
+			value.x = dragon.x;
+			value.y = dragon.y;
+			value.show(ctx);
+		})
 
-		// Red rectangle
-		var colors = ["red","blue"]
-		for(var i in dragon.buffs)
-		{	
-			var type = i;
-			ctx.beginPath();
-			ctx.lineWidth="2";
-			ctx.strokeStyle= colors[type];
-			type *= 3
-			ctx.rect(dragon.x-dragon.w/2-type,dragon.y-dragon.h/2-type,dragon.w + 2*type, dragon.h + 2*type ); 
-			ctx.stroke();
-		}
 
 		var ratio = 0;
 		//render life
@@ -164,13 +357,112 @@ Dragon.prototype = {
 		ctx.fillRect(dragon.x - dragon.w/2,dragon.y - dragon.h/2 - 10,dragon.w * ratio,3);
 
 	},
-	
+	front_pos:function()
+	{
+		var y = this.y;
+		if(this.slot >5)
+		{
+			y = this.y - this.h -5;
+		}
+		else
+		{
+			y = this.y + this.h + 5;
+		}
+
+		return {x:this.x,y:y};
+	},
+	direction_from:function(dragon)
+	{
+		if(dragon.origin_x - this.origin_x > 0)
+			return -1;
+		else if (dragon.origin_x - this.origin_x <0)
+			return 1;
+		else
+			return 0;
+
+	},
+	shake:function(attacker_direction,callback) //-1 from right ,0 up,1 from left
+	{
+		var direction = 1;
+		var max_offset = 5;
+		var cur_offset = 0;
+		var origin_x = this.x;
+		var origin_y = this.y;
+		var dragon = this;
+		var t = 0;
+
+		var y_dirction_modify = 0;
+		var dragon_rotate = (dragon.slot > 5)?1:-1;
+
+		var timer = setInterval(function(){
+			dragon.x += attacker_direction * direction * t *t
+
+			dragon.y += dragon_rotate*direction * t *t
+			
+			cur_offset += t * t
+			if(cur_offset > max_offset)
+			{
+				if(direction == 1)
+				{
+					cur_offset =0
+					direction = -1
+					t = 0
+				}
+				else
+				{
+					clearInterval(timer);
+					if(callback!= undefined)
+						callback();
+				}
+			}
+			t++
+
+		},50);
+	},
+	action:function()
+	{
+		var max_y_offset = 20;
+		var already_moved = 0;
+		var origin_y = this.y;
+		var velocity = 0.03;
+		var dragon = this;
+		var t = 0;
+		var direction = -1;
+
+		var timer =setInterval(function(){
+			var distance = 0.5*direction*t*t*velocity
+			dragon.y += distance
+			already_moved +=  0.5* t*t*velocity
+			if(already_moved >= max_y_offset) //first turn direction ,then end
+			{
+				if(direction == -1)
+				{
+					direction = 1;
+					already_moved = 0;
+					t = 0;
+
+					dragons_list_map[4].get_heal({numerica:4000})
+
+					//dragon.fire_magic( [{target:dragons_list_map[4].slot}] );
+				}
+				else
+				{
+					dragon.y = origin_y;
+					clearInterval(timer);
+				}
+
+			}
+			t += 1
+
+		},20)
+
+	},
 	update_status:function(after_attack_list)
 	{
 		var dragon = this;
-		for(var i in after_attack_list)
-		{
-			var status = after_attack_list[i]
+
+		$j.each(after_attack_list,function(key,val){
+			var status = val;
 			if( status.target == dragon.slot )
 			{
 
@@ -178,26 +470,25 @@ Dragon.prototype = {
 					dragon.power = status.args;
 				else if(status.type == 0) //buffer
 				{
-					if(status.status == 0) //add
+					if(status.status == 0) //get
 					{
-						dragon.buffs[status.args] = 1
+						if( status.args == 0)
+							dragon.buffs[status.args] = new AbsorbBuffer(dragon.x,dragon.y);
+						else
+							dragon.buffs[status.args] = new ReboundBuffer(dragon.x,dragon.y);
 					}
 					else if(status.status == 1)//delete
 					{
 						delete dragon.buffs[status.args]
 						//show rebound damage
-						if(status.args == 0)
-						{
-							var rebound_turn = round_list[currRound-1].turn_list[current_turn].rebound_turn;
-							dragons_list_map[rebound_turn.target].take_rebound_damage(rebound_turn.numerica);
-						}
+					
 					}
 
 				}
 
 			}
 
-		}
+		})
 
 	},
 	reset:function()
@@ -210,50 +501,46 @@ Dragon.prototype = {
 	get_heal:function(target,callback)
 	{
 		var dragon = this;
-		var heal_obj = new Heal(this.x + this.w/2,this.y-+ this.h/2,"+" + target.numerica);
-		heal_list.push(heal_obj);
-		setTimeout(function(){
-			heal_obj.alive = false
-			dragon.life += target.numerica;
-			dragon.update_status(target.after_attack_list)
+		Utils.AddRender(new HealingEffect(dragon.x,dragon.y-5,function(){
 
-			if(dragon.life > dragon.max_life)
-				dragon.life = dragon.max_life;
-			if(callback)
-				callback();
+			Utils.AddRender(new AttackEffect(dragon.x-dragon.w/2,dragon.y-5,-target.numerica,function(){
 
-		},800);
+				dragon.life += target.numerica;
+				dragon.update_status(target.after_attack_list)
+				if(dragon.life > dragon.max_life)
+					dragon.life = dragon.max_life;
+
+				if(callback)
+					callback();
+				
+			}));
+
+		}));
 	},
 
-	take_damage:function(damage,callback)
+	take_damage:function(direction,damage,callback)
 	{
 		var dragon = this;
-		renderTexts.push(["30px Arial","#00ff33","-" + damage,this.x,this.y])
-
-		setTimeout(function(){
-			renderTexts.pop();
-			dragon.life -= damage;
-			if(dragon.life < 0)
-				dragon.life = 0;
-			if(callback)
-				callback();
-		},500);
-
+		Utils.AddRender(new AttackEffect(dragon.x-dragon.w/2,dragon.y-5,damage,function(){
+				dragon.life -= damage;
+				if(dragon.life < 0)
+					dragon.life = 0;
+				if(callback != undefined)
+					callback();
+		}));
+		dragon.shake(direction);
 	},
 	take_rebound_damage:function(damage,callback)
 	{
-		this.reset();
 		var dragon = this;
-		renderTexts.push(["30px Arial","#00af33","Rebound:-" + damage,this.x,this.y - 10])
+		Utils.AddRender(new AttackEffect(dragon.x-dragon.w/2,dragon.y-5,damage,function(){
+				dragon.life -= damage;
+				if(dragon.life < 0)
+					dragon.life = 0;
+				if(callback != undefined)
+					callback();
+		}));
 
-		setTimeout(function(){
-			renderTexts.pop();
-			dragon.life -= damage;
-			if(dragon.life < 0)
-				dragon.life = 0;
-			if(callback)
-				callback();
-		},500);
 	},
 	play_magic:function(callback,args)
 	{
@@ -292,16 +579,16 @@ Dragon.prototype = {
 	fire_magic:function(targets,callback) //[slot,damage]
 	{
 
-		for(var i in targets)
+		for(var i = 0 ; i < targets.length ;++i)
 		{
 			var target = targets[i];
-			var fire = new Fire(this.x,this.y,0)
+			var fire = new Fireball(this.x,this.y,0)
 			fireball_list.push(fire);
 			target_dragon = dragons_list_map[target.target]
 			if(i == (targets.length - 1) )
-				Fire.play_towards_animation( fire,target_dragon,target,callback);
+				Fireball.play_towards_animation( fire,target_dragon,target,callback);
 			else
-				Fire.play_towards_animation( fire,target_dragon,target);
+				Fireball.play_towards_animation( fire,target_dragon,target);
 		}
 	},
 	heal:function(targets,after_attack_list,callback)
@@ -314,7 +601,7 @@ Dragon.prototype = {
 		}	
 
 		dragon.play_magic(function(){
-			for(var i in targets)
+			for(var i = 0 ; i < targets.length ;++i)
 			{
 				var target = targets[i];
 				target_dragon = dragons_list_map[target.target]
@@ -333,7 +620,7 @@ Dragon.prototype = {
 	{
 		var dragon = this;
 		var normal_attack_func = function(target){
-			var dst = Dragon.find_pos_by_slot(target.target);
+			var dst = dragons_list_map[target.target].front_pos();
 			var target_dragon = dragons_list_map[target.target];
 			var dest_x =dst.x;
 			var dest_y = dst.y;
@@ -367,13 +654,20 @@ Dragon.prototype = {
 				if(times == 0)
 				{
 					clearInterval(timer);	
-					target_dragon.take_damage(target.numerica,function(){
+					target_dragon.take_damage(target_dragon.direction_from(dragon), target.numerica,function(){
 						target_dragon.update_status(target.after_attack_list)
 						dragon.reset();
 						dragon.update_status(status_list);
 						if(callback)
 							callback();
 					})
+
+					var rebound_turn = round_list[currRound-1].turn_list[current_turn].rebound_turn;
+					if(rebound_turn.target != undefined)
+					{
+						dragons_list_map[rebound_turn.target].take_rebound_damage(rebound_turn.numerica);
+					}
+
 				}
 			}, 50); // loo
 
@@ -400,7 +694,7 @@ Dragon.prototype = {
 
 
 
-function Fire(x,y,rotate)
+function Fireball(x,y,rotate)
 {
 
 	this.x = x;
@@ -410,7 +704,7 @@ function Fire(x,y,rotate)
 }
 
 
-Fire.play_towards_animation = function(src,target_dragon,target,callback)
+Fireball.play_towards_animation = function(src,target_dragon,target,callback)
 {
 		var dst =  Dragon.find_pos_by_slot(target_dragon.slot);
 
@@ -432,7 +726,7 @@ Fire.play_towards_animation = function(src,target_dragon,target,callback)
 				clearInterval(timer);	
 				setTimeout(function(){
 					src.alive =false;
-					target_dragon.take_damage(target.numerica,function(){
+					target_dragon.take_damage(target_dragon.direction_from(dragon),target.numerica,function(){
 						target_dragon.update_status(target.after_attack_list);
 						if(callback)
 							callback();
@@ -444,10 +738,10 @@ Fire.play_towards_animation = function(src,target_dragon,target,callback)
 
 }
 
-Fire.prototype = {
+Fireball.prototype = {
 	show:function(ctx)
 	{
-		drawRotatedImage(Fire.image,this.x,this.y,this.rotate);
+		drawRotatedImage(Fireball.image,this.x,this.y,this.rotate);
 	}
 }
 
@@ -466,6 +760,10 @@ function drawScene() { // main drawScene function
     }
     ctx.drawImage(backgroundImage, 0 + iBgShiftX, 0, 1000, 940, 0, 0, 1000, 600);
 
+    ctx.font = "16px Arial";
+	ctx.fillStyle = '#FF3300'
+	ctx.fillText("Round: "  + currRound,30,50);
+
     // update sprite positions
     iSprPos++;
     if (iSprPos >= 9) {
@@ -473,53 +771,65 @@ function drawScene() { // main drawScene function
     }
 
 
-    for(var i in dragons_list)
-    {
-    	dragon = dragons_list[i];
-   		dragon.show(ctx,iSprPos)
-   	}
-
-   	//draw battleNotes
-	ctx.font = "16px Arial";
-	ctx.fillStyle = 'white';
-	ctx.fillText("Round:"+ currRound,50,30);
-	ctx.fillText(battleNotes,50,50);
+	$j.each( dragons_list, function( key, value ) {
+	  	value.show(ctx,iSprPos);
+	});
 
 
-	//draw render texts
-	for(var i in renderTexts)
-	{
-		text_array = renderTexts[i];
-		ctx.font = text_array[0];
-		ctx.fillStyle = text_array[1];
-		ctx.fillText(text_array[2],text_array[3],text_array[4]);
-
-	}
-
-	 for(var i in fireball_list)
-    {
-    	fireball = fireball_list[i];
-    	if(fireball.alive)
-   			fireball.show(ctx);
-   	}
+	$j.each(RenderList, function( key, value ) {
+	  	value.show(ctx);
+	});
 
 
-	 for(var i in heal_list)
-    {
-    	heal = heal_list[i];
-    	if(heal.alive)
-   			heal.show(ctx);
-   	}
+	
+ //    for(var i in dragons_list)
+ //    {
+ //    	dragon = dragons_list[i];
+ //   		dragon.show(ctx,iSprPos)
+ //   	}
 
 
+	// //draw render texts
+	// for(var i in renderTexts)
+	// {
+	// 	text_array = renderTexts[i];
+	// 	ctx.font = text_array[0];
+	// 	ctx.fillStyle = text_array[1];
+	// 	ctx.fillText(text_array[2],text_array[3],text_array[4]);
+
+	// }
+
+	//  for(var i in fireball_list)
+ //    {
+ //    	fireball = fireball_list[i];
+ //    	if(fireball.alive)
+ //   			fireball.show(ctx);
+ //   	}
+
+
+	//  for(var i in heal_list)
+ //    {
+ //    	heal = heal_list[i];
+ //    	if(heal.alive)
+ //   			heal.show(ctx);
+ //   	}
+
+// var obj = {
+//   "flammable": "inflammable",
+//   "duh": "no duh"
+// };
+// $.each( obj, function( key, value ) {
+//   alert( key + ": " + value );
+// });
+   	fire.show(ctx);
 }
 
 function InitDragons()
 {
-	for(var i in battlerecord.replay_log.dragon_list)
+	for(var i =0 ; i < battlerecord.replay_log.dragon_list.length ; ++i)
 	{
 		var obj = battlerecord.replay_log.dragon_list[i];
-		dragon = new Dragon( obj.slot, obj.type, obj.life, obj.life, obj.life.level)
+		dragon = new Dragon( obj.slot, obj.type, obj.life, obj.life, obj.level)
     	dragons_list.push(dragon);
     	dragons_list_map[dragon.slot] = dragon
 
@@ -583,18 +893,17 @@ function PlayRound()
 
 		//force status
 		var map = {}
-		for(var i in current_round.force_status_list)
-		{
-			var obj = current_round.force_status_list[i];
-			map[obj.slot] = obj
-		}	
-		for(var i in dragons_list)
-		{
-			var dragon = dragons_list[i];
+		$j.each(current_round.force_status_list,function(key,val){
+			map[val.slot] = val
+		})
+
+
+		$j.each(dragons_list,function(key,dragon){
 			var obj = map[dragon.slot];
 			dragon.power = obj.power
 			dragon.life = obj.life
-		}	
+		})
+	
 
 		//play turn
 		current_turn = 0
@@ -622,7 +931,7 @@ function Play()
 // -------------------------------------------------------------
 
 // initialization
-$(function(){
+$j(function(){
     canvas = document.getElementById('scene');
     ctx = canvas.getContext('2d');
     var width = canvas.width;
@@ -649,13 +958,19 @@ $(function(){
     var fireImage = new Image();
     fireImage.src = 'images/fireball.png'
     fireImage.onload = function(){}
-    Fire.image = fireImage;
+    Fireball.image = fireImage;
+    Fire.image = new Image();
+    Fire.image.src = 'images/healeffect.png'
+    Fire.image.onload = function(){}
+    fire = new Fire();
+
     setInterval(drawScene, 50); // loop drawScene
+
 
 
     InitDragons();
 
 
-    Play();
+   // Play();
 
 });
